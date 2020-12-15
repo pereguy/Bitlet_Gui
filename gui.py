@@ -22,33 +22,37 @@ class RelativityGUI(QtGui.QWidget):
         
         self.setupGUI()
         
-        self.objectGroup = ObjectGroupParam()
         
-        self.params = Parameter.create(name='params', type='group', children=[
-            dict(name='Load Preset..', type='list', values=[]),
-            #dict(name='Unit System', type='list', values=['', 'MKS']),
-            dict(name='Duration', type='float', value=10.0, step=0.1, limits=[0.1, None]),
-            dict(name='Reference Frame', type='list', values=[]),
-            dict(name='Animate', type='bool', value=True),
-            dict(name='Animation Speed', type='float', value=1.0, dec=True, step=0.1, limits=[0.0001, None]),
-            dict(name='Recalculate Worldlines', type='action'),
-            dict(name='Save', type='action'),
-            dict(name='Load', type='action'),
-            self.objectGroup,
-            ])
-        self.tree.setParameters(self.params, showTop=False)
-        self.params.param('Recalculate Worldlines').sigActivated.connect(self.recalculate)
-        self.params.param('Save').sigActivated.connect(self.save)
-        self.params.param('Load').sigActivated.connect(self.load)
-        self.params.param('Load Preset..').sigValueChanged.connect(self.loadPreset)
-        self.params.sigTreeStateChanged.connect(self.treeChanged)
+        params = [
+        {'name': 'Axis Select', 'type': 'group', 'children': [
+            {'name': 'X Axis', 'type': 'list', 'values': ['CC','CT','DIO','BW','MATs']},
+            {'name': 'Y Axis', 'type': 'list', 'values': ['CC','CT','DIO','BW','MATs']},
+            {'name': 'Start', 'type': 'action'},
+        ]},
+        {'name': 'Parameters', 'type': 'group', 'children': [
+            dict(name='CC', type='float', value=1.00, step=1.0, limits=[1.0, 65536.0]),
+            dict(name='CT', type='float', value=0.1, step=0.1, limits=[0.1, 100],siPrefix= True, suffix='ns'),
+            dict(name='Rows', type='int', value=32, step=32, limits=[32, 1024]),
+            dict(name='Columns', type='int', value=32, step=32, limits=[32, 1024]),
+            dict(name='MATs', type='int', value=1, step=32, limits=[1, 1048579]),
+            dict(name='BW', type='int', value=100, step=1, limits=[100, 16000],siPrefix= True, suffix='Gbit'),
+            dict(name='DIO', type='int', value=1, step=8, limits=[1, 128],siPrefix= True, suffix='bit'),
+            dict(name='EbitPIM', type='float', value=0.01, step=0.01, limits=[0.01, 1],siPrefix= True, suffix='pJ'),
+            dict(name='EbitCPU', type='float', value=1, step=0.01, limits=[1, 100],siPrefix= True, suffix='pJ')
+        ]}]
+        self.params = Parameter.create(name='params', type='group', children=params)
+        # self.tree.setParameters(self.params, showTop=False)
+        # self.params.param('Recalculate Worldlines').sigActivated.connect(self.recalculate)
+        # self.params.param('Save').sigActivated.connect(self.save)
+        # self.params.param('Load').sigActivated.connect(self.load)
+        # self.params.param('Load Preset..').sigValueChanged.connect(self.loadPreset)
+        # self.params.sigTreeStateChanged.connect(self.treeChanged)
         
         ## read list of preset configs
         presetDir = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), 'presets')
         if os.path.exists(presetDir):
             presets = [os.path.splitext(p)[0] for p in os.listdir(presetDir)]
             self.params.param('Load Preset..').setLimits(['']+presets)
-        
         
         
         
@@ -60,7 +64,8 @@ class RelativityGUI(QtGui.QWidget):
         self.splitter.setOrientation(QtCore.Qt.Horizontal)
         self.layout.addWidget(self.splitter)
         
-        self.tree = ParameterTree(showHeader=False)
+        # self.tree = ParameterTree(showHeader=False)
+        self.tree = ParameterList()
         self.splitter.addWidget(self.tree)
         
         self.splitter2 = QtGui.QSplitter()
@@ -192,10 +197,14 @@ class RelativityGUI(QtGui.QWidget):
         self.params.restoreState(state, removeChildren=False)
         self.recalculate()
         
-        
+ 
+
+
+          
+
 class ObjectGroupParam(pTypes.GroupParameter):
     def __init__(self):
-        pTypes.GroupParameter.__init__(self, name="Objects", addText="Add New..", addList=['Clock', 'Grid'])
+        pTypes.GroupParameter.__init__(self, name="Parametres")
         
     def addNew(self, typ):
         if typ == 'Clock':
