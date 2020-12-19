@@ -49,8 +49,8 @@ class RelativityGUI(QtGui.QWidget):
         self.layout.addWidget(self.splitter)
     
         # self.tree = ParameterTree(showHeader=False)
-        self.tree = ParametersListWidget()
-        self.splitter.addWidget(self.tree)
+        # self.tree = ParametersListWidget()
+        # self.splitter.addWidget(self.tree)
         
         self.splitter2 = QtGui.QSplitter()
         self.splitter2.setOrientation(QtCore.Qt.Vertical)

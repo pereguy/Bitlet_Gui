@@ -4,10 +4,17 @@ from ParamsListWidget import ScrollSpinParam,ParametersListWidget
 import qtmodern.windows
 import qtmodern.styles
 
-app = pg.mkQApp()
+from PyQt5.QtGui import *
 
+app = pg.mkQApp()
 qtmodern.styles.dark(app)
-win = RelativityGUI()
+
+win = pg.QtGui.QMainWindow()
+win.setCentralWidget(RelativityGUI())
+dock = pg.QtGui.QDockWidget()
+dock.setWidget(ParametersListWidget())
+win.addDockWidget(pg.QtCore.Qt.LeftDockWidgetArea,dock)
+# win = RelativityGUI()
 # win = ParametersListWidget()
 # win = ScrollSpinParam()
 win.setWindowTitle("Bitlet")
