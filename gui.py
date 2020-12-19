@@ -7,6 +7,7 @@ from pyqtgraph.parametertree import Parameter, ParameterTree
 from pyqtgraph.parametertree import types as pTypes
 import pyqtgraph.configfile
 from pyqtgraph.python2_3 import xrange
+from ParamsListWidget import ParametersListWidget
 
 
 class RelativityGUI(QtGui.QWidget):
@@ -19,28 +20,11 @@ class RelativityGUI(QtGui.QWidget):
         self.animTime = 0
         self.animDt = .016
         self.lastAnimTime = 0
-        
         self.setupGUI()
         
         
-        params = [
-        {'name': 'Axis Select', 'type': 'group', 'children': [
-            {'name': 'X Axis', 'type': 'list', 'values': ['CC','CT','DIO','BW','MATs']},
-            {'name': 'Y Axis', 'type': 'list', 'values': ['CC','CT','DIO','BW','MATs']},
-            {'name': 'Start', 'type': 'action'},
-        ]},
-        {'name': 'Parameters', 'type': 'group', 'children': [
-            dict(name='CC', type='float', value=1.00, step=1.0, limits=[1.0, 65536.0]),
-            dict(name='CT', type='float', value=0.1, step=0.1, limits=[0.1, 100],siPrefix= True, suffix='ns'),
-            dict(name='Rows', type='int', value=32, step=32, limits=[32, 1024]),
-            dict(name='Columns', type='int', value=32, step=32, limits=[32, 1024]),
-            dict(name='MATs', type='int', value=1, step=32, limits=[1, 1048579]),
-            dict(name='BW', type='int', value=100, step=1, limits=[100, 16000],siPrefix= True, suffix='Gbit'),
-            dict(name='DIO', type='int', value=1, step=8, limits=[1, 128],siPrefix= True, suffix='bit'),
-            dict(name='EbitPIM', type='float', value=0.01, step=0.01, limits=[0.01, 1],siPrefix= True, suffix='pJ'),
-            dict(name='EbitCPU', type='float', value=1, step=0.01, limits=[1, 100],siPrefix= True, suffix='pJ')
-        ]}]
-        self.params = Parameter.create(name='params', type='group', children=params)
+        
+        # self.params = Parameter.create(name='params', type='group', children=params)
         # self.tree.setParameters(self.params, showTop=False)
         # self.params.param('Recalculate Worldlines').sigActivated.connect(self.recalculate)
         # self.params.param('Save').sigActivated.connect(self.save)
@@ -63,9 +47,9 @@ class RelativityGUI(QtGui.QWidget):
         self.splitter = QtGui.QSplitter()
         self.splitter.setOrientation(QtCore.Qt.Horizontal)
         self.layout.addWidget(self.splitter)
-        
+    
         # self.tree = ParameterTree(showHeader=False)
-        self.tree = ParameterList()
+        self.tree = ParametersListWidget()
         self.splitter.addWidget(self.tree)
         
         self.splitter2 = QtGui.QSplitter()
@@ -124,11 +108,11 @@ class RelativityGUI(QtGui.QWidget):
         self.inertAnimationPlot.addItem(self.animations[0])
         self.refAnimationPlot.addItem(self.animations[1])
         
-        ## create lines representing all that is visible to a particular reference
-        #self.inertSpaceline = Spaceline(sim1, ref)
-        #self.refSpaceline = Spaceline(sim2)
-        self.inertWorldlinePlot.addItem(self.animations[0].items[ref].spaceline())
-        self.refWorldlinePlot.addItem(self.animations[1].items[ref].spaceline())
+        # ## create lines representing all that is visible to a particular reference
+        # #self.inertSpaceline = Spaceline(sim1, ref)
+        # #self.refSpaceline = Spaceline(sim2)
+        # self.inertWorldlinePlot.addItem(self.animations[0].items[ref].spaceline())
+        # self.refWorldlinePlot.addItem(self.animations[1].items[ref].spaceline())
         
         
         
@@ -768,11 +752,13 @@ class ClockItem(pg.ItemGroup):
 
 if __name__ == '__main__':
     pg.mkQApp()
+    
     #import pyqtgraph.console
     #cw = pyqtgraph.console.ConsoleWidget()
     #cw.show()
     #cw.catchNextException()
     win = RelativityGUI()
+    
     win.setWindowTitle("Relativity!")
     win.show()
     win.resize(1100,700)
