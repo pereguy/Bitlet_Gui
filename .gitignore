@@ -1,2 +1,6 @@
 venv/
 .vscode/
+__pycache__/*
+pyqtgraph - Shortcut.lnk
+__pycache__/gui.cpython-37.pyc
+__pycache__/ParamsListWidget.cpython-37.pyc
