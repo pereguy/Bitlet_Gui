@@ -8,8 +8,8 @@ from ModelParams import BitletParams
 
 class BitletModel:
   
-    def __init__(self):
-        self.params = BitletParams()
+    def __init__(self,params_dict):
+        self.params = BitletParams(params_dict)
     
 
     def set_params(self, params_dict):
@@ -38,8 +38,8 @@ class BitletModel:
         result = None
         cpu_throughput = self.cpu_throughput()
         pim_throughput = self.pim_throughput()
-        if cpu_throughput and pim_throughput:
-            result = (1 / ((1 / pim_throughput) + (1 / cpu_throughput)))
+        # if cpu_throughput and pim_throughput:
+        result = (1 / ((1 / pim_throughput) + (1 / cpu_throughput)))
         return result
     
     def pim_power(self):

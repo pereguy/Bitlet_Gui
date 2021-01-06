@@ -43,10 +43,11 @@ class BitletModelGUI(QtWidgets.QMainWindow):
         
 
     def start_new_tab(self):
-        plot_wdg = BitletPlotWidget()
+        plot_wdg = BitletPlotWidget(params_list=self.params_widget.extract_plot_params())
         self.plotting_widgets.append(plot_wdg)
         self.plotting_tabs.addTab(plot_wdg, f"Plot {self.plot_count + 1}")
-        self.plot_count += 1
+        self.plot_count += 1 
+        self.params_widget.reset()
 
         
     def save(self):
