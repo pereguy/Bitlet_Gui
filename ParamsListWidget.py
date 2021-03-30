@@ -1,12 +1,15 @@
-from PyQt5 import QtWidgets
+# from BitletPlotWidget import ParametersPlotWidget
+
 import numpy as np
 import collections
 import sys, os
 import pyqtgraph as pg
 from copy import deepcopy
-from pyqtgraph.Qt import QtGui, QtCore
-from pyqtgraph.metaarray.MetaArray import axis
-from ModelParams import BitletParams, bitlet_params, Param
+from PyQt5 import QtGui, QtCore
+from PyQt5 import QtWidgets
+from PyQt5.QtCore import pyqtSlot, pyqtSignal
+from BitletModelParams import BitletParams, bitlet_params, Param
+from double_slider import DoubleSlider
 
 class ParametersListWidget(QtWidgets.QWidget):
     def __init__(self, title='ParamsList'):
@@ -29,21 +32,28 @@ class ParametersListWidget(QtWidgets.QWidget):
         # self.paramsListLayout.setContentsMargins(0, 0, 0, 0)    
         
         self.params = {
-            'cc' : ScrollSpinParam(**bitlet_params['cc']),
-            'ct' : ScrollSpinParam(**bitlet_params['ct']),
-            'bw' : ScrollSpinParam(**bitlet_params['bw']),
-            'rows' : ScrollSpinParam(**bitlet_params['rows']),
+            'cc' : BitletSlider(**bitlet_params['cc']),
+            'ct' : BitletSlider(**bitlet_params['ct']),
+            'bw' : BitletSlider(**bitlet_params['bw']),
+            'rows' : BitletSlider(**bitlet_params['rows']),
             # 'columns' : ScrollSpinParam(**bitlet_params['cols']),
-            'mats' : ScrollSpinParam(**bitlet_params['mats']),
-            'dio' : ScrollSpinParam(**bitlet_params['dio']),
-            'ebitpim' : ScrollSpinParam(**bitlet_params['ebitpim']),
-            'ebitcpu' : ScrollSpinParam(**bitlet_params['ebitcpu'])
+            'mats' : BitletSlider(**bitlet_params['mats']),
+            'dio' : BitletSlider(**bitlet_params['dio']),
+            'ebitpim' : BitletSlider(**bitlet_params['ebitpim']),
+            'ebitcpu' : BitletSlider(**bitlet_params['ebitcpu'])
         }
         
         self.axis_widget = QtWidgets.QGroupBox('Select Axis')
         self.axis_layout = QtWidgets.QVBoxLayout()
-        self.x_list = pg.ComboBox(items=[''] + [v['name'] for v in bitlet_params.values()])
-        self.y_list = pg.ComboBox(items=[''] + [v['name'] for v in bitlet_params.values()])
+        self.x_list = QtWidgets.QComboBox() 
+        self.x_list.addItems( [v['name'] for v in bitlet_params.values()])
+        self.x_list.setPlaceholderText("Select X")
+        self.x_list.setCurrentIndex(-1)
+        self.y_list = QtWidgets.QComboBox() 
+        self.y_list.addItems( [v['name'] for v in bitlet_params.values()])
+        self.y_list.setPlaceholderText("Select Y")
+        self.y_list.setCurrentIndex(-1)
+        # self.y_list = pg.ComboBox(items=[''] + [v['name'] for v in bitlet_params.values()])
         self.btn_start = pg.FeedbackButton("Start")
         self.btn_start.clicked.connect(self.start_params)
         self.axis_layout.addWidget(self.x_list)
@@ -78,13 +88,16 @@ class ParametersListWidget(QtWidgets.QWidget):
 
     
     def start_params(self):
-        x_param = self.x_list.value()
-        y_param = self.y_list.value()
+        x_param = self.x_list.currentText()
+        y_param = self.y_list.currentText()
         
-        if (x_param and y_param) and (x_param != y_param):
+        if (self.x_list.currentIndex() == -1) or (self.y_list.currentIndex() == -1):
+            self.error_msg("You Must Choose Both Axis")
+            self.reset_params()
+        elif (x_param != y_param):
             for name, param in self.params.items():
                 const = ((name != x_param.lower()) and (name != y_param.lower()))
-                param.set_rule(const)
+                param.set_role(const)
             self.btn_plot.setEnabled(True)
             self.x_param = x_param.lower()
             self.y_param = y_param.lower()
@@ -92,7 +105,7 @@ class ParametersListWidget(QtWidgets.QWidget):
             self.error_msg("Choose Different Axis")
             self.reset_params()
         else:
-            self.error_msg("You Must Choose Both Axis")
+            self.error_msg("Error")
             self.reset_params()
                
             
@@ -100,8 +113,8 @@ class ParametersListWidget(QtWidgets.QWidget):
         msg_box = QtWidgets.QMessageBox.warning(self, "Error", msg)
             
     def reset(self):
-        self.x_list.setCurrentIndex(0)
-        self.y_list.setCurrentIndex(0)
+        self.x_list.setCurrentIndex(-1)
+        self.y_list.setCurrentIndex(-1)
         self.reset_params()      
     
     def reset_params(self):
@@ -122,35 +135,99 @@ class ParametersListWidget(QtWidgets.QWidget):
                 axis_y = param.get_param_object()
             else:
                 params[name] = param.get_copy()
-        plot_params = ParametersPlotWidget(axis_x,axis_y,params)
-        return plot_params
+        # plot_params = ParametersPlotWidget(params)
+        return axis_x,axis_y, params
         
         
+class BitletSlider(QtWidgets.QWidget):
+    
+    paramValueChanged = pyqtSignal(str,object)
+    
+    def __init__(self,name, value=0,limits=[],step=1,units='',fixed=False, factor=1):
+        super(BitletSlider,self).__init__()
+        self.name = name
+        self.value = value
+        self.limits = limits
+        self.step = step
+        self.units = units
+        if units:
+            self.funits = f'[{units}]'
+        else:
+            self.funits = '' 
+        self.fixed = fixed
+        self.initUI()
+
+    def initUI(self):
+
+        self.hbox = QtWidgets.QHBoxLayout()
         
+        self.label = QtWidgets.QLabel()
+        self.label.setText(self.name)
+        self.label.setFixedSize(QtCore.QSize(70, 30))
+        
+        self.slid = DoubleSlider(minimum=self.limits[0], maximum=self.limits[1], step=self.step, value=self.value)
+        self.slid.setFixedSize(QtCore.QSize(150,30))
+        self.slid.doubleValueChanged.connect(self.changeValue)
+
+        self.value_label = QtWidgets.QLabel(f"{self.value} {self.funits}", self)
+        self.value_label.setMinimumWidth(80)
+        self.set_role(self.fixed)
+
+        self.hbox.addWidget(self.label)
+        # self.hbox.addSpacing(5)
+        self.hbox.addWidget(self.slid)
+        self.hbox.addSpacing(5)
+        self.hbox.addWidget(self.value_label)
+
+        self.setLayout(self.hbox)
+
+        self.show()
+
+    def format_value(self, value):
+        if type(self.step) == int:
+            return int(value)
+        else:
+            return np.round(value,2)
+    
+    def changeValue(self, value):
+        formated = self.format_value(value)
+        self.value = formated
+        self.value_label.setText(f"{self.value} {self.funits}")    
+        self.paramValueChanged.emit(self.name.lower(), formated)
+    
+    def get_param_object(self):
+        return Param(self.name,self.limits,self.step,self.value,self.units,self.fixed)
                 
-class ParametersPlotWidget(QtWidgets.QWidget):
-    def __init__(self,axis_x, axis_y,params_widgets):
-        super().__init__()
-        self.x_axis = axis_x
-        self.y_axis = axis_y
-        self.params_widgets = params_widgets
-        
-        self.paramsLayout = QtWidgets.QGridLayout(self)
-        for i, param in enumerate(self.params_widgets):
-            self.paramsLayout.addWidget(self.params_widgets[param], i // 3, i % 3 )
-        
-        self.setLayout(self.paramsLayout)
-        
-    def get_model_params(self):
-        params_dict = dict()
-        params_dict[self.x_axis.name.lower()] = self.x_axis
-        params_dict[self.y_axis.name.lower()] = self.y_axis
-        
-        for i, param in enumerate(self.params_widgets):
-            params_dict[param] = self.params_widgets[param].get_param_object()
-        return params_dict
-        
-        
+    def set_role(self, role):
+        self.fixed = role
+        if role: 
+            self.slid.setEnabled(True)
+            self.value_label.setEnabled(True)
+        else:
+            self.slid.setEnabled(False)
+            self.value_label.setEnabled(False)
+    
+    def reset(self):
+        self.slid.setValue(bitlet_params[self.name.lower()]['value'])
+        self.set_role(False)
+    
+    def get_copy(self):
+        new_attr = self._get_params().copy()
+        new_obj = BitletSlider(**new_attr)
+        return new_obj  
+
+    def _get_params(self):
+        params = dict()
+        params['name'] = self.name
+        params['value'] = self.value 
+        params['limits'] = self.limits
+        params['step'] = self.step 
+        params['units'] = self.units
+        params['fixed'] = self.fixed 
+        return params
+    
+    def to_numpy(self):
+        return np.array([self.value])
 
 
 class ScrollSpinParam(QtWidgets.QWidget):
@@ -164,16 +241,19 @@ class ScrollSpinParam(QtWidgets.QWidget):
         self.step = step
         self.units = units 
         self.constant = constant  # constant == not X not Y
-        if self.step < 1:
-            self.factor = int(1 / self.step)
-        else:
-            self.factor = 1 
-        
+        self.values = (limits[1] - limits[0] + 1) // self.step
+        # if self.step < 1:
+        #     self.values = np.round(self.values,2).tolist()
         self.setupUi()
         # self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         self.setLayout(self.paramLayout)
         self.show()
         
+    
+    # def slider_value(self,index=None,value=None):
+    #     if index:
+    #         return self.limits[0] + 
+            
     
     def setupUi(self):
         self.paramLayout = QtWidgets.QGridLayout(self)
@@ -188,8 +268,10 @@ class ScrollSpinParam(QtWidgets.QWidget):
         # self.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         # self.label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignCenter)
         self.paramLayout.addWidget(self.label, 0,0)
-
-        self.spinBox = QtWidgets.QDoubleSpinBox()
+        if type(self.step) == int:
+            self.spinBox = QtWidgets.QSpinBox()
+        else:
+            self.spinBox = QtWidgets.QDoubleSpinBox()
         self.spinBox.setObjectName(u"spinBox")
         self.spinBox.setValue(self.value)
         self.spinBox.setRange(self.limits[0],self.limits[1])
@@ -200,33 +282,41 @@ class ScrollSpinParam(QtWidgets.QWidget):
         self.horizontalSlider = QtWidgets.QSlider()
         self.horizontalSlider.setObjectName(u"horizontalSlider")
         self.horizontalSlider.setOrientation(QtCore.Qt.Horizontal)
-        self.horizontalSlider.setValue(int(self.value * self.factor))
-        self.horizontalSlider.setMinimum(int(self.limits[0] * self.factor))
-        self.horizontalSlider.setMaximum(int(self.limits[1] * self.factor))
-        self.horizontalSlider.setTickInterval(int(self.step * self.factor))
-        self.horizontalSlider.setSingleStep(int(self.step * self.factor))
-        self.horizontalSlider.setPageStep(int(self.step * self.factor))
+        self.horizontalSlider.setValue(self.values.index(self.value))
+        self.horizontalSlider.setMinimum(0)
+        self.horizontalSlider.setMaximum(len(self.values)-1)
+        # self.horizontalSlider.setTickInterval(int(self.step * self.factor))
+        self.horizontalSlider.setSingleStep(1)
+        # self.horizontalSlider.setPageStep(int(self.step * self.factor))
         # self.horizontalSlider.setSizePolicy()
         self.paramLayout.addWidget(self.horizontalSlider, 0,3)
+        self.set_role(self.constant)
+        
+    
+    def value_changed(self,who):
+        self.disconnect_widgets()
+        if who == 'spin':
+            val = self.spinBox.value()
+            self.horizontalSlider.setValue(self.values.index(val))
+            self.values = val
+        elif who == 'slider':
+            val = self.horizontalSlider.value()
+            self.spinBox.setValue(self.values[val])
+            self.value = self.values[val]
+        self.connect_widgets()
+        
 
-        self.spinBox.valueChanged.connect(self.spinbox_changed)
-        self.horizontalSlider.valueChanged.connect(self.slider_changed)
-        
-        self.set_rule(self.constant)
-        
-        
-    def spinbox_changed(self, val):
-        val = (val // self.step) * self.step
-        self.value = val
-        self.horizontalSlider.setValue(int(val * self.factor))
-        # self.spinBox.setValue(val)
     
-    def slider_changed(self):
-        val = self.horizontalSlider.value()
-        self.value = val
-        self.spinBox.setValue(round(val / self.factor, 2))
+    def connect_widgets(self):
+        self.spinBox.valueChanged.connect(lambda x: self.value_changed('spin')) ##self.spinbox_changed)
+        self.horizontalSlider.valueChanged.connect(lambda x: self.value_changed('slider')) ##(self.slider_changed)
     
-    def set_rule(self,constant):
+    def disconnect_widgets(self):
+        self.horizontalSlider.valueChanged.disconnect()
+        self.spinBox.valueChanged.disconnect()
+    
+    def set_role(self,constant):
+        self.connect_widgets()
         self.constant = constant  
         if constant:
             self.spinBox.setEnabled(True)
@@ -237,24 +327,26 @@ class ScrollSpinParam(QtWidgets.QWidget):
             
     
     def reset(self):
-        self.value = self.limits[0]
-        self.spinBox.setValue(self.spinBox.minimum())
-        self.horizontalSlider.setValue(self.horizontalSlider.minimum())
+        self.disconnect_widgets()
+        self.value = bitlet_params[self.name.lower()]['value']
+        self.spinBox.setValue(bitlet_params[self.name.lower()]['value']) ##(self.spinBox.minimum())
+        self.horizontalSlider.setValue(bitlet_params[self.name.lower()]['value']) ##(self.horizontalSlider.minimum())
         self.spinBox.setEnabled(False)
         self.horizontalSlider.setEnabled(False)
     
     def get_copy(self):
         new_attr = deepcopy(bitlet_params[self.name.lower()])
-        new_attr['value'] = self.value
-        new_attr['constant'] = self.constant
+        new_attr['value'] = deepcopy(self.value)
+        new_attr['constant'] = deepcopy(self.constant)
         new_obj = ScrollSpinParam(**new_attr)
         return new_obj
     
     def get_param_object(self):
         return Param(self.name,self.limits,self.step,self.value,self.units,self.constant)
         
-
         
+
+
         
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
@@ -271,7 +363,6 @@ if __name__ == "__main__":
     y = Param(**bitlet_params['bw']),
     
     main = QtWidgets.QMainWindow()
-    plt = ParametersPlotWidget(x,y,paramss)
     main.setCentralWidget(plt)
     main.show()
     app.exec_()

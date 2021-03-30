@@ -3,98 +3,78 @@ from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from ModelParams import BitletParams
+from BitletModelParams import BitletParams
 
 
 class BitletModel:
   
-    def __init__(self,params_dict):
-        self.params = BitletParams(params_dict)
-    
-
-    def set_params(self, params_dict):
-        self.params = BitletParams(params_dict)
+    def __init__(self,model_params=None):
+        # self.params = BitletParams.get_params(params_dict)
+        self.params = model_params
         
   
-    def pim_throughput(self):
+    def pim_throughput(self,rows,mats,cc,ct):
         result = None
-        row = self.params.rows
-        mats = self.params.mats
-        cc = self.params.cc
-        ct = self.params.ct
-        if all([row.is_valid(), mats.is_valid(), cc.is_valid(), ct.is_valid()]):
-            result = ((row.value * mats.value) / (cc.value * ct.value))
+        result = ((rows * mats) / (cc * ct))  * (10^6)
         return result
     
-    def cpu_throughput(self):
+    def cpu_throughput(self,dio,bw):
         result = None
-        bw = self.params.bw
-        dio = self.params.dio
-        if all([bw.is_valid(), dio.is_valid()]):
-            result = (bw.value / dio.value)
+        result = (bw / dio)  * (10^12)
         return result
     
-    def combined_throughput(self):
+    def combined_throughput(self,rows,mats,cc,ct,dio,bw):
         result = None
-        cpu_throughput = self.cpu_throughput()
-        pim_throughput = self.pim_throughput()
-        # if cpu_throughput and pim_throughput:
+        cpu_throughput = self.cpu_throughput(dio,bw)
+        pim_throughput = self.pim_throughput(rows,mats,cc,ct)
         result = (1 / ((1 / pim_throughput) + (1 / cpu_throughput)))
+        return result 
+    
+    def pim_power(self,rows,mats,ebitpim,ct):
+        result = None
+        result = ( (ebitpim * rows * mats) / ct )
         return result
     
-    def pim_power(self):
+    def cpu_power(self,bw,ebitcpu):
         result = None
-        row = self.params.rows
-        mats = self.params.mats
-        ebitspim = self.params.ebitpim
-        ct = self.params.ct
-        if all([row.is_valid(), mats.is_valid(), ebitspim.is_valid(), ct.is_valid()]):
-            result = ( (ebitspim.value * row.value * mats.value) / ct.value )
+        result = (bw * ebitcpu)
         return result
     
-    def cpu_power(self):
+    def combined_power_throughput(self,rows,mats,cc,ct,dio,bw,ebitcpu,ebitpim):
         result = None
-        bw = self.params.bw
-        ebitscpu = self.params.ebitcpu
-        if all([bw.is_valid(), ebitscpu.is_valid()]):
-            result = (bw.value * ebitscpu.value)
-        return result
-    
-    def combined_power(self):
-        result = None
-        cpu_throughput = self.cpu_throughput()
-        pim_throughput = self.pim_throughput()
-        combined_throughput = self.combined_throughput()
-        cpu_power = self.cpu_power()
-        pim_power = self.pim_power()
-        if combined_throughput and cpu_power and pim_power:
-            result = ( (pim_power / pim_throughput) + (cpu_power / cpu_throughput) ) * combined_throughput
-        return result
+        cpu_throughput = self.cpu_throughput(dio,bw)
+        pim_throughput = self.pim_throughput(rows,mats,cc,ct)
+        combined_throughput = self.combined_throughput(rows,mats,cc,ct,dio,bw)
+        cpu_power = self.cpu_power(bw,ebitcpu)
+        pim_power = self.pim_power(dio,mats,ebitpim,ct)
+        combined_power = ( (pim_power / pim_throughput) + (cpu_power / cpu_throughput) ) * combined_throughput
+        return combined_throughput, combined_power
         
     
-    def pim_energy(self):
-        result = None
-        pim_throughput = self.pim_throughput()
-        pim_power = self.pim_power()
-        if pim_throughput and pim_power:
-            result = ( pim_power / pim_throughput )
-        return result
+    # def pim_energy(self):
+    #     result = None
+    #     pim_throughput = self.pim_throughput()
+    #     pim_power = self.pim_power()
+    #     # if pim_throughput and pim_power:
+    #     result = ( pim_power / pim_throughput )
+    #     return result
         
-    def cpu_energy(self):
-        result = None
-        cpu_throughput = self.pim_throughput()
-        cpu_power = self.pim_power()
-        if cpu_throughput and cpu_power:
-            result = ( cpu_power / cpu_throughput )
-        return result
+    # def cpu_energy(self):
+    #     result = None
+    #     cpu_throughput = self.pim_throughput()
+    #     cpu_power = self.pim_power()
+    #     # if cpu_throughput and cpu_power:
+    #     result = ( cpu_power / cpu_throughput )
+    #     return result
 
-    def combined_energy(self):
-        result = None
-        combined_throughput = self.combined_throughput()
-        combined_power = self.combined_power()
-        if combined_throughput and combined_power:
-            result = ( combined_power / combined_throughput )
-        return result
+    # def combined_energy(self):
+    #     result = None
+    #     combined_throughput = self.combined_throughput()
+    #     combined_power = self.combined_power()
+    #     # if combined_throughput and combined_power:
+    #     result = ( combined_power / combined_throughput )
+    #     return result
       
       
-      
+    def update_param(self,param_name, value):
+        self.params.__setattr__(param_name,value)

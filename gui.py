@@ -14,6 +14,7 @@ class BitletModelGUI(QtWidgets.QMainWindow):
         #config main
         self.setupUI()
         self.plot_count = 0
+        self.curr_index = -1
         self.plotting_widgets = []
         
         
@@ -21,7 +22,7 @@ class BitletModelGUI(QtWidgets.QMainWindow):
         self.setWindowTitle("Bitlet Model")
         self.resize(1350, 957)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
+        # sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.sizePolicy().hasHeightForWidth())
         self.setSizePolicy(sizePolicy)
@@ -38,14 +39,17 @@ class BitletModelGUI(QtWidgets.QMainWindow):
         self.plotting_tabs = QtWidgets.QTabWidget(self)
         self.plotting_tabs.setDocumentMode(True)
         self.plotting_tabs.setTabsClosable(True)
+        self.plotting_tabs.tabCloseRequested.connect(lambda x: self.plotting_tabs.removeTab(x))
         self.plotting_tabs.setTabShape(QtWidgets.QTabWidget.Rounded)
         self.setCentralWidget(self.plotting_tabs)
         
 
     def start_new_tab(self):
-        plot_wdg = BitletPlotWidget(params_list=self.params_widget.extract_plot_params())
+        axis_x,axis_y, plot_params = self.params_widget.extract_plot_params()
+        plot_wdg = BitletPlotWidget(axis_x,axis_y, plot_params)
         self.plotting_widgets.append(plot_wdg)
-        self.plotting_tabs.addTab(plot_wdg, f"Plot {self.plot_count + 1}")
+        self.curr_index = self.plotting_tabs.addTab(plot_wdg, f"Plot {self.plot_count + 1}")
+        self.plotting_tabs.setCurrentIndex(self.curr_index)
         self.plot_count += 1 
         self.params_widget.reset()
 
@@ -70,7 +74,7 @@ class BitletModelGUI(QtWidgets.QMainWindow):
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
-    main = MainWindow()
+    main = QtWidgets.QMainWindow()
     main.show()
     app.exec_()
     

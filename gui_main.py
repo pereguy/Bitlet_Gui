@@ -6,14 +6,20 @@ from ParamsListWidget import ParametersListWidget
 from BitletPlotWidget import BitletPlotWidget
 import qtmodern.windows
 import qtmodern.styles
+from qt_material import apply_stylesheet
 
 
 ## Start Qt event loop unless running in interactive mode or using pyside.
 if __name__ == '__main__':
+    # import pyqtgraph.examples
+    # pyqtgraph.examples.run()
     import sys
     app = QtWidgets.QApplication(sys.argv)
-    qtmodern.styles.dark(app)
+    # qtmodern.styles.dark(app)
     main = BitletModelGUI()
-    dwin = qtmodern.windows.ModernWindow(main)
-    dwin.show()
+    apply_stylesheet(app, theme='dark_blue.xml')
+    
+    # dwin = qtmodern.windows.ModernWindow(main)
+    # dwin.show()
+    main.show()
     app.exec_()
