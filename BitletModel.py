@@ -49,31 +49,6 @@ class BitletModel:
         pim_power = self.pim_power(dio,mats,ebitpim,ct)
         combined_power = ( (pim_power / pim_throughput) + (cpu_power / cpu_throughput) ) * combined_throughput
         return combined_throughput, combined_power
-        
-    
-    # def pim_energy(self):
-    #     result = None
-    #     pim_throughput = self.pim_throughput()
-    #     pim_power = self.pim_power()
-    #     # if pim_throughput and pim_power:
-    #     result = ( pim_power / pim_throughput )
-    #     return result
-        
-    # def cpu_energy(self):
-    #     result = None
-    #     cpu_throughput = self.pim_throughput()
-    #     cpu_power = self.pim_power()
-    #     # if cpu_throughput and cpu_power:
-    #     result = ( cpu_power / cpu_throughput )
-    #     return result
-
-    # def combined_energy(self):
-    #     result = None
-    #     combined_throughput = self.combined_throughput()
-    #     combined_power = self.combined_power()
-    #     # if combined_throughput and combined_power:
-    #     result = ( combined_power / combined_throughput )
-    #     return result
       
       
     def update_param(self,param_name, value):

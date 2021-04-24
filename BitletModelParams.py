@@ -13,7 +13,7 @@ bitlet_params = {
     'ebitpim': dict(name='EbitPIM',  value=0.01, step=0.01, limits=[0.01, 1.0], units='pJ',factor=-12), #10^-12
     'ebitcpu': dict(name='EbitCPU', value=1.0, step=0.01, limits=[1.0, 100.0], units='pJ',factor=-12) #10^-12
 }
-VALUES = 1000
+VALUES = 2000
 class Param:
     def __init__(self, name, limits, step, value=None, units=None, fixed=True, factor=1):
         self.name = name
@@ -23,10 +23,6 @@ class Param:
         self.step = step 
         self.units = units
         self.fixed = fixed
-        # self.range = np.logspace(start=self.min, stop=self.max,num=VALUES,base=2)
-        # self.range = np.arange(self.min,self.max,)(self.min, self.max, VALUES)
-        # self.range = np.linspace(self.min, self.max, VALUES)
-        # if not fixed:
         self.value = value 
 
         
@@ -48,11 +44,11 @@ class Param:
                         value=self.value, units=self.units, fixed=self.fixed)
         return new_obj
 
-    def to_numpy(self):
+    def to_numpy(self, values):
         if self.fixed:
             return np.array([self.value])
         else:
-            return  np.linspace(self.min, self.max, VALUES)
+            return  np.linspace(self.min, self.max, values)
     
 
 class BitletParams:
