@@ -11,16 +11,58 @@ from PyQt5.QtCore import pyqtSlot, pyqtSignal
 from BitletModelParams import BitletParams, bitlet_params, Param
 from double_slider import DoubleSlider
 
-class ParametersListWidget(QtWidgets.QWidget):
-    def __init__(self, title='ParamsList'):
+class AxisesListWidget(QtWidgets.QGroupBox):
+    axisesSelected = pyqtSignal(str,str)
+    
+    def __init__(self):
         super().__init__()
+        self.axises_list_indexes = {v['name']: i for i,v in enumerate(bitlet_params.values())}
         
-        # self.setSizePolicy(QtWidgets.QSizePolicy.Fixed,QtWidgets.QSizePolicy.Fixed)
+        # self.axis_widget = QtWidgets.QGroupBox('Select Axis')
+        self.axis_layout = QtWidgets.QVBoxLayout()
+        self.x_list = QtWidgets.QComboBox() 
+        self.x_list.addItems( [v['name'] for v in bitlet_params.values()])
+        self.x_list.setPlaceholderText("Select X")
+        self.x_list.setCurrentIndex(-1)
+        self.y_list = QtWidgets.QComboBox() 
+        self.y_list.addItems( [v['name'] for v in bitlet_params.values()])
+        self.y_list.setPlaceholderText("Select Y")
+        self.y_list.setCurrentIndex(-1)
+        self.btn_start = pg.FeedbackButton("Plot")
         
+        self.axis_layout.addWidget(self.x_list)
+        self.axis_layout.addWidget(self.y_list)
+        self.axis_layout.addWidget(self.btn_start)
+        # self.axis_widget.setLayout(self.axis_layout)
+        self.setLayout(self.axis_layout)
+        self.btn_start.clicked.connect(self.start_plot)
+        
+    def start_plot(self):
+        x_param = self.x_list.currentText()
+        y_param = self.y_list.currentText()
+        if (self.x_list.currentIndex() == -1) or (self.y_list.currentIndex() == -1):
+            self.error_msg("You Must Choose Both Axis")
+        elif (x_param != y_param) :
+            self.axisesSelected.emit(x_param, y_param)
+        elif (x_param == y_param):
+            self.error_msg("Choose Different Axis")
+        else:
+            self.error_msg("Error")
+        
+    
+    def error_msg(self,msg):
+        msg_box = QtWidgets.QMessageBox.warning(self, "Error", msg)
+
+
+
+class ParametersListWidget(QtWidgets.QWidget):
+    
+    paramValueChanged = pyqtSignal(str,object)
+    
+    def __init__(self ,title='ParamsList'):
+        super().__init__()        
         self.title = title
         self.setupUi()
-        self.x_param = None
-        self.y_param = None
         self.setLayout(self.paramsListLayout)
         self.show()
         
@@ -43,23 +85,7 @@ class ParametersListWidget(QtWidgets.QWidget):
             'ebitcpu' : BitletSlider(**bitlet_params['ebitcpu'])
         }
         
-        self.axis_widget = QtWidgets.QGroupBox('Select Axis')
-        self.axis_layout = QtWidgets.QVBoxLayout()
-        self.x_list = QtWidgets.QComboBox() 
-        self.x_list.addItems( [v['name'] for v in bitlet_params.values()])
-        self.x_list.setPlaceholderText("Select X")
-        self.x_list.setCurrentIndex(-1)
-        self.y_list = QtWidgets.QComboBox() 
-        self.y_list.addItems( [v['name'] for v in bitlet_params.values()])
-        self.y_list.setPlaceholderText("Select Y")
-        self.y_list.setCurrentIndex(-1)
-        # self.y_list = pg.ComboBox(items=[''] + [v['name'] for v in bitlet_params.values()])
-        self.btn_start = pg.FeedbackButton("Start")
-        self.btn_start.clicked.connect(self.start_params)
-        self.axis_layout.addWidget(self.x_list)
-        self.axis_layout.addWidget(self.y_list)
-        self.axis_layout.addWidget(self.btn_start)
-        self.axis_widget.setLayout(self.axis_layout)
+        self.axises_list_indexes = {v['name']: i for i,v in enumerate(bitlet_params.values())}
 
         self.params_widget = QtWidgets.QGroupBox('Parameters')
         self.paramsLayout = QtWidgets.QVBoxLayout()
@@ -74,70 +100,53 @@ class ParametersListWidget(QtWidgets.QWidget):
         self.paramsLayout.addWidget(self.params['ebitcpu'])
         self.params_widget.setLayout(self.paramsLayout)
         
-        
-        self.btn_plot = QtWidgets.QPushButton("Plot")
-        self.btn_plot.setEnabled(False)
-        self.btn_reset = QtWidgets.QPushButton("Reset")
-        self.btn_reset.clicked.connect(self.reset)
-        self.paramsListLayout.addWidget(self.axis_widget)
+        for param in self.params:
+            self.params[param].paramValueChanged.connect(self.param_update)
+            self.params[param].set_role(False)
         self.paramsListLayout.addWidget(self.params_widget)
-        self.paramsListLayout.addWidget(self.btn_plot)
-        self.paramsListLayout.addWidget(self.btn_reset)
-        
         self.setLayout(self.paramsListLayout)
 
-    
-    def start_params(self):
-        x_param = self.x_list.currentText()
-        y_param = self.y_list.currentText()
+    def param_update(self,param_name, value):
+        self.paramValueChanged.emit(param_name, value)
         
-        if (self.x_list.currentIndex() == -1) or (self.y_list.currentIndex() == -1):
-            self.error_msg("You Must Choose Both Axis")
-            self.reset_params()
-        elif (x_param != y_param):
-            for name, param in self.params.items():
-                const = ((name != x_param.lower()) and (name != y_param.lower()))
-                param.set_role(const)
-            self.btn_plot.setEnabled(True)
-            self.x_param = x_param.lower()
-            self.y_param = y_param.lower()
-        elif (x_param == y_param):
-            self.error_msg("Choose Different Axis")
-            self.reset_params()
-        else:
-            self.error_msg("Error")
-            self.reset_params()
-               
-            
-    def error_msg(self,msg):
-        msg_box = QtWidgets.QMessageBox.warning(self, "Error", msg)
-            
-    def reset(self):
-        self.x_list.setCurrentIndex(-1)
-        self.y_list.setCurrentIndex(-1)
-        self.reset_params()      
+    
+    def start_params(self, x_param, y_param):
+        self.x_param = x_param
+        self.y_param = y_param
+        for name, param in self.params.items():
+            const = ((name != self.x_param.lower()) and (name != self.y_param.lower()))
+            param.set_role(const)
+     
     
     def reset_params(self):
         for param in self.params.values():
             param.reset()
-        self.x_param = None
-        self.y_param = None
-        self.btn_plot.setEnabled(False)
+
         
     def extract_plot_params(self):
-        axis_x = None
-        axis_y = None
         params = dict()
         for name, param in self.params.items():
-            if name == self.x_param:
-                axis_x = param.get_param_object()
-            elif name == self.y_param:
-                axis_y = param.get_param_object()
-            else:
-                params[name] = param.get_copy()
-        # plot_params = ParametersPlotWidget(params)
-        return axis_x,axis_y, params
+            if name != self.x_param.lower() and name != self.y_param.lower():
+                params[name] = param.value
+        return params
+
+    def set_plot_params(self,axis_x,axis_y,params):
+        prev_params = deepcopy(self.params)
+        self.x_param = axis_x.name
+        self.y_param = axis_y.name
+        self.x_list.setCurrentIndex(self.axises_list_indexes[axis_x.name])
+        self.y_list.setCurrentIndex(self.axises_list_indexes[axis_y.name])
+        self.params[self.x_param] = axis_x
+        self.params[self.y_param] = axis_y
+        for name, param in params.items():
+            self.params[name].changeValue(param)
+        return prev_params
         
+    def get_curr_params(self):
+        prev_params = {k:v.value for k,v in self.params.items()}
+        axis_x = self.params[self.x_param]
+        axis_y = self.params[self.y_param]
+        return axis_x,axis_y, prev_params
         
 class BitletSlider(QtWidgets.QWidget):
     
@@ -168,7 +177,13 @@ class BitletSlider(QtWidgets.QWidget):
         self.slid = DoubleSlider(minimum=self.limits[0], maximum=self.limits[1], step=self.step, value=self.value)
         self.slid.setFixedSize(QtCore.QSize(150,30))
         self.slid.doubleValueChanged.connect(self.changeValue)
-
+        
+        self.spinBox = QtWidgets.QDoubleSpinBox()
+        self.spinBox.setValue(self.slid.value())
+        self.spinBox.setMaximum(self.limits[1])
+        self.spinBox.setMinimum(self.limits[0])
+        
+        
         self.value_label = QtWidgets.QLabel(f"{self.value} {self.funits}", self)
         self.value_label.setMinimumWidth(80)
         self.set_role(self.fixed)
@@ -192,7 +207,8 @@ class BitletSlider(QtWidgets.QWidget):
     def changeValue(self, value):
         formated = self.format_value(value)
         self.value = formated
-        self.value_label.setText(f"{self.value} {self.funits}")    
+        self.value_label.setText(f"{self.value} {self.funits}") 
+        self.slid.setValue(value)   
         self.paramValueChanged.emit(self.name.lower(), formated)
     
     def get_param_object(self):
@@ -209,9 +225,9 @@ class BitletSlider(QtWidgets.QWidget):
     
     def reset(self):
         self.slid.setValue(bitlet_params[self.name.lower()]['value'])
-        self.set_role(False)
+        # self.set_role(False)
     
-    def get_copy(self):
+    def deep_copy(self):
         new_attr = self._get_params().copy()
         new_obj = BitletSlider(**new_attr)
         return new_obj  
@@ -331,8 +347,8 @@ class ScrollSpinParam(QtWidgets.QWidget):
         self.value = bitlet_params[self.name.lower()]['value']
         self.spinBox.setValue(bitlet_params[self.name.lower()]['value']) ##(self.spinBox.minimum())
         self.horizontalSlider.setValue(bitlet_params[self.name.lower()]['value']) ##(self.horizontalSlider.minimum())
-        self.spinBox.setEnabled(False)
-        self.horizontalSlider.setEnabled(False)
+        # self.spinBox.setEnabled(False)
+        # self.horizontalSlider.setEnabled(False)
     
     def get_copy(self):
         new_attr = deepcopy(bitlet_params[self.name.lower()])

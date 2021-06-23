@@ -1,10 +1,7 @@
 
 import sys, os
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets
 from gui import BitletModelGUI
-from ParamsListWidget import ParametersListWidget
-from BitletPlotWidget import BitletPlotWidget
-import qtmodern.windows
 import qtmodern.styles
 from qt_material import apply_stylesheet
 
