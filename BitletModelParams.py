@@ -5,7 +5,7 @@ import numpy  as np
 bitlet_params = {
     'cc': dict(name='CC',  value=1, step=1, limits=[1, 65536], units='Cycles', factor=0), 
     'ct':dict(name='CT',  value=10.0, step=0.1, limits=[1.0, 100.0], units='ns',factor=-9), #10^-9
-    'rows': dict(name='Rows', value=1024, step=8, limits=[16, 1024],factor=0), 
+    'rows': dict(name='Rows', value=1024.0, step=8, limits=[16, 1024],factor=0), 
     # 'cols':dict(name='Columns',  value=32, step=32, limits=[32, 1024]),
     'mats': dict(name='MATs', value=1, step=1, limits=[1, 64], units='K',factor=3), # 2^10, 10^3
     'bw': dict(name='BW', value=1.0, step=0.1,limits=[0.1, 16.0], units='Tbit',factor=12), #10^12

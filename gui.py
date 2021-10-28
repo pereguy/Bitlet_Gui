@@ -2,7 +2,7 @@
 import numpy as np
 
 import sys, os
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets, QtCore, QtGui
 
 from ParamsListWidget import ParametersListWidget, AxisesListWidget
 from BitletPlotWidget import BitletPlotWidget
@@ -13,9 +13,9 @@ class BitletModelGUI(QtWidgets.QMainWindow):
         super(BitletModelGUI,self).__init__()
         #config main
         self.tabs_params = dict()
+        self.plot_count = 0
+        self.curr_index = 0
         self.setupUI()
-        self.plot_count = -1
-        self.curr_index = -1
         self.plotting_widgets = []
         self.plotting_params = dict()
         
@@ -56,7 +56,56 @@ class BitletModelGUI(QtWidgets.QMainWindow):
         self.plotting_tabs.setTabShape(QtWidgets.QTabWidget.Rounded)
         self.plotting_tabs.currentChanged.connect(self.change_tab)
         self.setCentralWidget(self.plotting_tabs)
+        self.addWelcomeTab()
         
+    def addWelcomeTab(self):
+        # widget and layout
+        welcome_widget = QtWidgets.QWidget()
+        welcome_widget.setStyleSheet('background-color: lightgrey;')
+        welcome_widget.setContentsMargins(10,10,10,10)
+        
+        verticalLayout = QtWidgets.QVBoxLayout(welcome_widget)
+        verticalLayout.setContentsMargins(10, 10,10, 10)
+        # verticalLayout.setStyleSheet('background-color: lightgrey;')
+        verticalLayout.setSpacing(10)
+        
+        #  fonts 
+        welcome_font = QtGui.QFont()
+        welcome_font.setPointSize(24)
+        welcome_font.setBold(True)
+        welcome_font.setWeight(50)
+        
+        inst_font = QtGui.QFont()
+        inst_font.setPointSize(12)
+        
+        #welcome label
+        welcome_label = QtWidgets.QLabel("Welcome\nBitlet Model GUI",welcome_widget)
+        welcome_label.setFont(welcome_font)
+        welcome_label.setAlignment(QtCore.Qt.AlignCenter)
+
+        # inst label
+        inst_text = "In Order To Start Plotting:\n  -  Select Parameters For Axises X And Y \n  -  Hit The Plot Button\n  -  Adjust The Other Parameters Values And See The Plot Changing "
+        inst_label = QtWidgets.QLabel(inst_text,welcome_widget) 
+        inst_label.setFont(inst_font)
+
+        # names_label
+        names_label = QtWidgets.QLabel("By Noa Riklin & Guy Pereg", welcome_widget)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(names_label.sizePolicy().hasHeightForWidth())
+        names_label.setSizePolicy(sizePolicy)
+        
+        verticalLayout.addWidget(welcome_label)
+        verticalLayout.addWidget(inst_label)
+        verticalLayout.addWidget(names_label)
+        
+        welcome_widget.setLayout(verticalLayout)
+        self.plotting_tabs.addTab(welcome_widget, "Welcome")
+
+
+
+
 
     def change_tab(self,tab_index):
         if self.plot_count < tab_index:
@@ -78,19 +127,23 @@ class BitletModelGUI(QtWidgets.QMainWindow):
         self.plot_count += 1
         if self.curr_index >= 0:
             param_widget = ParametersListWidget()
-            param_widget.start_params(axis_x, axis_y)
+            param_widget.start_params(axis_x['name'], axis_y['name'])
             param_widget.paramValueChanged.connect(self.plot_value_changed)
             self.tabs_params[self.plot_count] =  param_widget
             self.params_widget = param_widget
             self.update_param_widget()
         else:
-            self.params_widget.start_params(axis_x, axis_y)
+            self.params_widget.start_params(axis_x['name'], axis_y['name'])
         plot_params = self.params_widget.extract_plot_params()
         # try:
-        param_x = Param(**bitlet_params[axis_x.lower()])
+        param_x = Param(**bitlet_params[axis_x['name'].lower()])
         param_x.fixed = False
-        param_y = Param(**bitlet_params[axis_y.lower()])
+        param_x.min = axis_x['min']
+        param_x.max = axis_x['max']
+        param_y = Param(**bitlet_params[axis_y['name'].lower()])
         param_y.fixed = False
+        param_y.min = axis_y['min']
+        param_y.max = axis_y['max']
         plot_wdg = BitletPlotWidget(param_x,param_y, plot_params)
         # except TypeError:
         #     msg_box = QtWidgets.QMessageBox.warning(self, "Error", "Unknown Error")
@@ -98,7 +151,7 @@ class BitletModelGUI(QtWidgets.QMainWindow):
         #         self.change_tab(self.plotting_tabs.currentIndex())
         #     return 
         self.plotting_widgets.append(plot_wdg)
-        self.curr_index = self.plotting_tabs.addTab(plot_wdg, f"Plot {self.plot_count + 1}")
+        self.curr_index = self.plotting_tabs.addTab(plot_wdg, f"Plot {self.plot_count}")
         self.plotting_tabs.setCurrentIndex(self.curr_index)
     
     

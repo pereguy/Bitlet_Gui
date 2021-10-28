@@ -7,12 +7,12 @@ import pyqtgraph as pg
 from copy import deepcopy
 from PyQt5 import QtGui, QtCore
 from PyQt5 import QtWidgets
-from PyQt5.QtCore import pyqtSlot, pyqtSignal
+from PyQt5.QtCore import QSize, pyqtSlot, pyqtSignal
 from BitletModelParams import BitletParams, bitlet_params, Param
 from double_slider import DoubleSlider
 
 class AxisesListWidget(QtWidgets.QGroupBox):
-    axisesSelected = pyqtSignal(str,str)
+    axisesSelected = pyqtSignal(dict,dict)
     
     def __init__(self):
         super().__init__()
@@ -24,18 +24,47 @@ class AxisesListWidget(QtWidgets.QGroupBox):
         self.x_list.addItems( [v['name'] for v in bitlet_params.values()])
         self.x_list.setPlaceholderText("Select X")
         self.x_list.setCurrentIndex(-1)
+        self.x_list.setFixedWidth(460)
         self.y_list = QtWidgets.QComboBox() 
         self.y_list.addItems( [v['name'] for v in bitlet_params.values()])
         self.y_list.setPlaceholderText("Select Y")
         self.y_list.setCurrentIndex(-1)
+        self.y_list.setFixedWidth(460)
+
+        self.y_range = QtWidgets.QHBoxLayout()
+        self.y_range_left = QtWidgets.QLineEdit()
+        self.y_range_right = QtWidgets.QLineEdit()
+        self.y_range_label = QtWidgets.QLabel("< Y <")
+        self.y_range.addWidget(self.y_range_left)
+        self.y_range.addWidget(self.y_range_label)
+        self.y_range.addWidget(self.y_range_right)
+        
+        self.x_range = QtWidgets.QHBoxLayout()
+        self.x_range_left = QtWidgets.QLineEdit()
+        self.x_range_right = QtWidgets.QLineEdit()
+        self.x_range_label = QtWidgets.QLabel("< X <")
+        self.x_range.addWidget(self.x_range_left)
+        self.x_range.addWidget(self.x_range_label)
+        self.x_range.addWidget(self.x_range_right)
+    
+    
         self.btn_start = pg.FeedbackButton("Plot")
+        self.btn_start.setFixedWidth(460)
         
         self.axis_layout.addWidget(self.x_list)
         self.axis_layout.addWidget(self.y_list)
+        self.axis_layout.addLayout(self.x_range)
+        self.axis_layout.addLayout(self.y_range)
         self.axis_layout.addWidget(self.btn_start)
+        self.axis_layout.setContentsMargins(15,15,15,15)
+        # self.setFixedSize(QSize(495,300))
+        
         # self.axis_widget.setLayout(self.axis_layout)
+        self.x_list.currentTextChanged.connect(self.change_x_range)
+        self.y_list.currentTextChanged.connect(self.change_y_range)
         self.setLayout(self.axis_layout)
         self.btn_start.clicked.connect(self.start_plot)
+        self.setAlignment(QtCore.Qt.AlignCenter)
         
     def start_plot(self):
         x_param = self.x_list.currentText()
@@ -43,11 +72,33 @@ class AxisesListWidget(QtWidgets.QGroupBox):
         if (self.x_list.currentIndex() == -1) or (self.y_list.currentIndex() == -1):
             self.error_msg("You Must Choose Both Axis")
         elif (x_param != y_param) :
-            self.axisesSelected.emit(x_param, y_param)
+            x_data = {'name': x_param,
+                      'min': float(self.x_range_left.text()),
+                      'max': float(self.x_range_right.text())} 
+            y_data = {'name': y_param,
+                      'min': float(self.y_range_left.text()),
+                      'max': float(self.y_range_right.text())} 
+            self.axisesSelected.emit(x_data, y_data)
         elif (x_param == y_param):
             self.error_msg("Choose Different Axis")
         else:
             self.error_msg("Error")
+    
+    def change_x_range(self, curr_var:str):
+        curr_values = bitlet_params[curr_var.lower()]['limits']
+        curr_units = bitlet_params[curr_var.lower()]['units']
+        self.x_range_label.setText(f" < {curr_var} [{curr_units}] < ")
+        self.x_range_left.setText(f'{curr_values[0]}')
+        self.x_range_right.setText(f'{curr_values[1]}')
+        
+    def change_y_range(self, curr_var:str):
+        curr_values = bitlet_params[curr_var.lower()]['limits']
+        curr_units = bitlet_params[curr_var.lower()]['units']
+        self.y_range_label.setText(f" < {curr_var} [{curr_units}] < ")
+        self.y_range_left.setText(f'{curr_values[0]}')
+        self.y_range_right.setText(f'{curr_values[1]}')
+        
+        
         
     
     def error_msg(self,msg):
@@ -173,26 +224,34 @@ class BitletSlider(QtWidgets.QWidget):
         self.label = QtWidgets.QLabel()
         self.label.setText(self.name)
         self.label.setFixedSize(QtCore.QSize(70, 30))
-        
+        if self.name  == 'Rows':
+            a = 1
         self.slid = DoubleSlider(minimum=self.limits[0], maximum=self.limits[1], step=self.step, value=self.value)
         self.slid.setFixedSize(QtCore.QSize(150,30))
-        self.slid.doubleValueChanged.connect(self.changeValue)
         
         self.spinBox = QtWidgets.QDoubleSpinBox()
-        self.spinBox.setValue(self.slid.value())
-        self.spinBox.setMaximum(self.limits[1])
+        
+        self.spinBox.setMaximum(self.limits[1]+1)
         self.spinBox.setMinimum(self.limits[0])
+        self.spinBox.setSingleStep(self.step)
+        self.spinBox.setValue(self.slid.value())
+        if self.funits:
+            self.spinBox.setSuffix(f' {self.funits}')
+        
+        self.spinBox.valueChanged.connect(self.changeValue)
+        self.slid.doubleValueChanged.connect(self.changeValue)
         
         
-        self.value_label = QtWidgets.QLabel(f"{self.value} {self.funits}", self)
-        self.value_label.setMinimumWidth(80)
-        self.set_role(self.fixed)
+        # self.value_label = QtWidgets.QLabel(f"{self.value} {self.funits}", self)
+        # self.value_label.setMinimumWidth(80)
+        # self.set_role(self.fixed)
 
         self.hbox.addWidget(self.label)
         # self.hbox.addSpacing(5)
         self.hbox.addWidget(self.slid)
         self.hbox.addSpacing(5)
-        self.hbox.addWidget(self.value_label)
+        self.hbox.addWidget(self.spinBox)
+        # self.hbox.addWidget(self.value_label)
 
         self.setLayout(self.hbox)
 
@@ -205,11 +264,16 @@ class BitletSlider(QtWidgets.QWidget):
             return np.round(value,2)
     
     def changeValue(self, value):
+        self.spinBox.valueChanged.disconnect()
+        self.slid.doubleValueChanged.disconnect()
         formated = self.format_value(value)
         self.value = formated
-        self.value_label.setText(f"{self.value} {self.funits}") 
-        self.slid.setValue(value)   
+        # self.value_label.setText(f"{self.value} {self.funits}") 
+        self.slid.setValue(value) 
+        self.spinBox.setValue(value)  
         self.paramValueChanged.emit(self.name.lower(), formated)
+        self.spinBox.valueChanged.connect(self.changeValue)
+        self.slid.doubleValueChanged.connect(self.changeValue)
     
     def get_param_object(self):
         return Param(self.name,self.limits,self.step,self.value,self.units,self.fixed)
@@ -218,10 +282,12 @@ class BitletSlider(QtWidgets.QWidget):
         self.fixed = role
         if role: 
             self.slid.setEnabled(True)
-            self.value_label.setEnabled(True)
+            self.spinBox.setEnabled(True)
+            # self.value_label.setEnabled(True)
         else:
             self.slid.setEnabled(False)
-            self.value_label.setEnabled(False)
+            self.spinBox.setEnabled(False)
+            # self.value_label.setEnabled(False)
     
     def reset(self):
         self.slid.setValue(bitlet_params[self.name.lower()]['value'])

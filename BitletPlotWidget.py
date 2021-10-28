@@ -45,7 +45,7 @@ class PlotWindow(FigureCanvas):
         z,z2 = self.bitlet_model.combined_power_throughput(**self.params)
         norm = colors.LogNorm()
         cf = self.axes.pcolormesh(x_axis,y_axis,z,norm=norm,vmin=z.min(),vmax=z.max(),cmap=plt.get_cmap('RdYlGn'))
-        cbar = plt.colorbar(cf,ax=self.axes)
+        cbar = plt.colorbar(cf,ax=self.axes,  extend='max')
         cbar.ax.set_ylabel('Combined Throughput [GOPS]', fontsize=16)
         locator = ticker.LogLocator(base=2)
         pwr_ax = self.axes.contour(x_axis, y_axis, z2,colors='blue',locator=locator,extend='both')
@@ -63,8 +63,8 @@ class PlotWindow(FigureCanvas):
                 # mid = -3
                 pwr_labels_loc.append(l[0][mid])
 
-        trh_ax.clabel( fontsize=12,use_clabeltext=True,  inline=False, fmt= lambda x: f'Thr = {x:.3f} [GOPS]',manual=trh_labels_loc)
-        pwr_ax.clabel(fontsize=12, use_clabeltext=True, inline=False, fmt= lambda x: f'Pwr = {x:.3f} [Watt]',manual=pwr_labels_loc)
+        trh_ax.clabel( fontsize=12,use_clabeltext=True,  inline=False, fmt= lambda x: f'TP = {x:.3f} [GOPS]',manual=trh_labels_loc)
+        pwr_ax.clabel(fontsize=12, use_clabeltext=True, inline=False, fmt= lambda x: f'P = {x:.3f} [W]',manual=pwr_labels_loc)
         self.axes.set_xlim(xmin=self.x_lim[0] , xmax=self.x_lim[1])
         self.axes.set_ylim(ymin=self.y_lim[0], ymax=self.y_lim[1])
         self.axes.set_xlabel(f"{self.x_axis.name} {self.x_axis.units}")
@@ -126,6 +126,10 @@ class BitletPlotWidget(QWidget):
         self.canvas = PlotWindow(self.x_param,self.y_param,self.params_sliders,self.resolution)
         self.canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.toolbar = NavigationToolbar(self.canvas, self)
+        to_remove = ['Subplots', 'Customize']
+        for action in self.toolbar.actions():
+            if action.text() in to_remove:
+                self.toolbar.removeAction(action)
         # self.params_widget = QtWidgets.QWidget(self)
         # self.paramsLayout = QGridLayout(self)
         

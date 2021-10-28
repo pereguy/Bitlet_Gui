@@ -1,1 +1,1 @@
-venv\Scripts\python.exe -m gui_main
+venv\Scripts\python.exe -m main
