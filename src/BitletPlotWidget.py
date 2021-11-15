@@ -1,7 +1,6 @@
 from PyQt5 import QtWidgets
 from PyQt5.QtGui import QIcon
-from BitletModelParams import BitletParams
-from BitletModel import BitletModel
+
 import sys
 import numpy as np
 import seaborn as sns
@@ -19,7 +18,7 @@ from PyQt5.QtCore import QSize, Qt, pyqtSlot
 from PyQt5.QtWidgets import QAction, QApplication, QComboBox, QFormLayout, QHBoxLayout, QLineEdit, QSpinBox, QVBoxLayout , QWidget, QPushButton, QToolBar
 from PyQt5.QtWidgets import QLabel , QGridLayout, QDesktopWidget, QSizePolicy
 
-
+from src.BitletModel import BitletModel
 
 
 class PlotWindow(FigureCanvas):

@@ -8,8 +8,8 @@ from copy import deepcopy
 from PyQt5 import QtGui, QtCore
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QSize, pyqtSlot, pyqtSignal
-from BitletModelParams import BitletParams, bitlet_params, Param
-from double_slider import DoubleSlider
+from src.BitletModelParams import BitletParams, bitlet_params, Param
+from src.double_slider import DoubleSlider
 
 class AxisesListWidget(QtWidgets.QGroupBox):
     axisesSelected = pyqtSignal(dict,dict)
@@ -130,7 +130,7 @@ class ParametersListWidget(QtWidgets.QWidget):
             'bw' : BitletSlider(**bitlet_params['bw']),
             'rows' : BitletSlider(**bitlet_params['rows']),
             # 'columns' : ScrollSpinParam(**bitlet_params['cols']),
-            'mats' : BitletSlider(**bitlet_params['mats']),
+            'xbs' : BitletSlider(**bitlet_params['xbs']),
             'dio' : BitletSlider(**bitlet_params['dio']),
             'ebitpim' : BitletSlider(**bitlet_params['ebitpim']),
             'ebitcpu' : BitletSlider(**bitlet_params['ebitcpu'])
@@ -145,7 +145,7 @@ class ParametersListWidget(QtWidgets.QWidget):
         self.paramsLayout.addWidget(self.params['cc'])
         self.paramsLayout.addWidget(self.params['ct'])
         # self.paramsLayout.addWidget(self.params['columns'])
-        self.paramsLayout.addWidget(self.params['mats'])
+        self.paramsLayout.addWidget(self.params['xbs'])
         self.paramsLayout.addWidget(self.params['dio'])
         self.paramsLayout.addWidget(self.params['ebitpim'])
         self.paramsLayout.addWidget(self.params['ebitcpu'])
@@ -436,7 +436,7 @@ if __name__ == "__main__":
             'cc' : ScrollSpinParam(**bitlet_params['cc']),
             'rows' : ScrollSpinParam(**bitlet_params['rows']),
             # 'columns' : ScrollSpinParam(**bitlet_params['cols']),
-            'mats' : ScrollSpinParam(**bitlet_params['mats']),
+            'xbs' : ScrollSpinParam(**bitlet_params['xbs']),
             'dio' : ScrollSpinParam(**bitlet_params['dio']),
             'ebitpim' : ScrollSpinParam(**bitlet_params['ebitpim']),
             'ebitcpu' : ScrollSpinParam(**bitlet_params['ebitcpu'])

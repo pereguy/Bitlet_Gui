@@ -4,9 +4,9 @@ import numpy as np
 import sys, os
 from PyQt5 import QtWidgets, QtCore, QtGui
 
-from ParamsListWidget import ParametersListWidget, AxisesListWidget
-from BitletPlotWidget import BitletPlotWidget
-from BitletModelParams import  bitlet_params, Param
+from src.ParamsListWidget import ParametersListWidget, AxisesListWidget
+from src.BitletPlotWidget import BitletPlotWidget
+from src.BitletModelParams import  bitlet_params, Param
 
 class BitletModelGUI(QtWidgets.QMainWindow):
     def __init__(self):
@@ -15,15 +15,15 @@ class BitletModelGUI(QtWidgets.QMainWindow):
         self.tabs_params = dict()
         self.plot_count = 0
         self.curr_index = 0
-        self.setupUI()
         self.plotting_widgets = []
         self.plotting_params = dict()
+        self.setupUI()
         
         
         
     def setupUI(self):
         self.setWindowTitle("Bitlet Model")
-        self.resize(1350, 957)
+        self.resize(1800, 900)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         # sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -102,6 +102,8 @@ class BitletModelGUI(QtWidgets.QMainWindow):
         
         welcome_widget.setLayout(verticalLayout)
         self.plotting_tabs.addTab(welcome_widget, "Welcome")
+        self.plotting_widgets.append(welcome_widget)
+                                     
 
 
 

@@ -3,7 +3,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from BitletModelParams import BitletParams
+from src.BitletModelParams import BitletParams
 
 
 class BitletModel:
@@ -13,9 +13,9 @@ class BitletModel:
         self.params = model_params
         
   
-    def pim_throughput(self,rows,mats,cc,ct):
+    def pim_throughput(self,rows,xbs,cc,ct):
         result = None
-        result = ((rows * mats) / (cc * ct))  * (10^6)
+        result = ((rows * xbs) / (cc * ct))  * (10^6)
         return result
     
     def cpu_throughput(self,dio,bw):
@@ -23,16 +23,16 @@ class BitletModel:
         result = (bw / dio)  * (10^12)
         return result
     
-    def combined_throughput(self,rows,mats,cc,ct,dio,bw):
+    def combined_throughput(self,rows,xbs,cc,ct,dio,bw):
         result = None
         cpu_throughput = self.cpu_throughput(dio,bw)
-        pim_throughput = self.pim_throughput(rows,mats,cc,ct)
+        pim_throughput = self.pim_throughput(rows,xbs,cc,ct)
         result = (1 / ((1 / pim_throughput) + (1 / cpu_throughput)))
         return result 
     
-    def pim_power(self,rows,mats,ebitpim,ct):
+    def pim_power(self,rows,xbs,ebitpim,ct):
         result = None
-        result = ( (ebitpim * rows * mats) / ct )
+        result = ( (ebitpim * rows * xbs) / ct )
         return result
     
     def cpu_power(self,bw,ebitcpu):
@@ -40,13 +40,13 @@ class BitletModel:
         result = (bw * ebitcpu)
         return result
     
-    def combined_power_throughput(self,rows,mats,cc,ct,dio,bw,ebitcpu,ebitpim):
+    def combined_power_throughput(self,rows,xbs,cc,ct,dio,bw,ebitcpu,ebitpim):
         result = None
         cpu_throughput = self.cpu_throughput(dio,bw)
-        pim_throughput = self.pim_throughput(rows,mats,cc,ct)
-        combined_throughput = self.combined_throughput(rows,mats,cc,ct,dio,bw)
+        pim_throughput = self.pim_throughput(rows,xbs,cc,ct)
+        combined_throughput = self.combined_throughput(rows,xbs,cc,ct,dio,bw)
         cpu_power = self.cpu_power(bw,ebitcpu)
-        pim_power = self.pim_power(dio,mats,ebitpim,ct)
+        pim_power = self.pim_power(dio,xbs,ebitpim,ct)
         combined_power = ( (pim_power / pim_throughput) + (cpu_power / cpu_throughput) ) * combined_throughput
         return combined_throughput, combined_power
       

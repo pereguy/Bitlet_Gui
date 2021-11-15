@@ -1,1 +1,1 @@
-venv\Scripts\python.exe -m main
+venv\Scripts\python.exe -m src.__main__

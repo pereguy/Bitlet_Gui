@@ -7,7 +7,7 @@ bitlet_params = {
     'ct':dict(name='CT',  value=10.0, step=0.1, limits=[1.0, 100.0], units='ns',factor=-9), #10^-9
     'rows': dict(name='Rows', value=1024.0, step=8, limits=[16, 1024],factor=0), 
     # 'cols':dict(name='Columns',  value=32, step=32, limits=[32, 1024]),
-    'mats': dict(name='MATs', value=1, step=1, limits=[1, 64], units='K',factor=3), # 2^10, 10^3
+    'xbs': dict(name='XBs', value=1, step=1, limits=[1, 64], units='K',factor=3), # 2^10, 10^3
     'bw': dict(name='BW', value=1.0, step=0.1,limits=[0.1, 16.0], units='Tbit',factor=12), #10^12
     'dio': dict(name='DIO',  value=16, step=8, limits=[1, 256], units='bit',factor=0), 
     'ebitpim': dict(name='EbitPIM',  value=0.01, step=0.01, limits=[0.01, 1.0], units='pJ',factor=-12), #10^-12
@@ -57,7 +57,7 @@ class BitletParams:
         self.ct = Param(**bitlet_params['ct'],fixed=False).to_numpy()
         self.bw = Param(**bitlet_params['bw'],fixed=False).to_numpy()
         self.rows = Param(**bitlet_params['rows'],fixed=False).to_numpy()
-        self.mats = Param(**bitlet_params['mats'],fixed=False).to_numpy()
+        self.xbs = Param(**bitlet_params['xbs'],fixed=False).to_numpy()
         self.dio = Param(**bitlet_params['dio'],fixed=False).to_numpy()
         self.ebitpim = Param(**bitlet_params['ebitpim'],fixed=False).to_numpy()
         self.ebitcpu = Param(**bitlet_params['ebitcpu'],fixed=False).to_numpy()

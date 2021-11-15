@@ -1,7 +1,7 @@
-
 import sys, os
+sys.path.insert(0,'.')
 from PyQt5 import QtWidgets
-from gui import BitletModelGUI
+from src.gui import BitletModelGUI
 import qtmodern.styles
 from qt_material import apply_stylesheet
 
